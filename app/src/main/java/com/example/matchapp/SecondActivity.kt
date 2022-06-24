@@ -2,6 +2,7 @@ package com.example.matchapp
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.animation.AlphaAnimation
 import android.widget.TextView
 
 class SecondActivity : AppCompatActivity() {
@@ -9,21 +10,29 @@ class SecondActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_second)
 
-        val wi = WeatherInfo.getInstance()
-        val weather = wi.GVweather
-        val secondname = findViewById<TextView>(R.id.name)
-        val secondweather = findViewById<TextView>(R.id.tvCityWeather)
-        val secondmax = findViewById<TextView>(R.id.tvMax)
-        val secondmin = findViewById<TextView>(R.id.tvMin)
+        val WeatherAllDatas = WeatherInfo.getInstance().GVweather
+        var count:Int = 0
+        val WeatherStatus = mapOf<String,String>("Clouds" to "まあ、曇りだわ","Rain" to "まあ雨だわ","Clear" to "晴れだわ")
+        val ViewPartsArray = arrayOf(
+            findViewById<TextView>(R.id.name),
+            findViewById<TextView>(R.id.tvCityWeather),
+            findViewById<TextView>(R.id.tvMax),
+            findViewById<TextView>(R.id.tvMin),
+            findViewById<TextView>(R.id.tvCityWeatherDetail)
+        )
 
-//        ホントは!!は使わないほうが良いから、下のinfosをしっかり型宣言したほうが良い。
+        //ホントは!!は使わないほうが良いから、下のinfosをしっかり型宣言?したほうが良い。
         var infos = listOf<String>()
-        infos = weather[intent.getStringExtra("CITY")]!!//←の!!がつかない状態でエラーがないのが理想。
-//["さいたま","腫れ","22","11"]
-        secondname.text = infos[0]
-        secondweather.text = infos[1]
-        secondmax.text = infos[2]
-        secondmin.text = infos[3]
+        infos = WeatherAllDatas[intent.getStringExtra("CITY")]!!//←の!!がつかない状態でエラーがないのが理想。
 
+        ViewPartsArray.forEach{ viewobj ->
+            viewobj.text = WeatherStatus[infos[count]] ?: infos[count] ?: "情報を取得できませんでした"
+            count ++
+        }
+
+        //アニメーション
+        val fadeAnim = AlphaAnimation(0.0f,1.0f)
+        fadeAnim.duration = 2000
+        ViewPartsArray.map{ it.animation = fadeAnim }
     }
 }

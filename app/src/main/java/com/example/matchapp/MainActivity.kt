@@ -12,6 +12,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
+import android.widget.TextView
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,10 +21,10 @@ class MainActivity : AppCompatActivity() {
 
         val apiKey = "5fa5880256d9d005b553922279a1162f"
         val mainUrl = "https://api.openweathermap.org/data/2.5/weather?lang=ja"
-        val prefectures_infos = listOf("tokyo","kanagawa","saitama","ibaraki","tochigi","chiba")
+        val prefectures_querys = listOf("hokkaido","tokyo","kanagawa","saitama","ibaraki","tochigi","chiba")
         var preference_name = mutableListOf<String>()
-        var mmm = mutableMapOf<String,List<String>>()
-        var mweatherList: ArrayList<Weather> = arrayListOf()
+        var WeatherAllDatas = mutableMapOf<String,List<String>>()
+        var VariableForDBSave: ArrayList<Weather> = arrayListOf()
         val database = WeatherDatabase.getDatabase(this)
         val weatherDao = database.weatherDao()
 
@@ -31,7 +32,7 @@ class MainActivity : AppCompatActivity() {
         val client = OkHttpClient()
         lifecycleScope.launch {
             if(weatherDao.getAll().size == 0){
-                prefectures_infos.forEach{ prefecture ->
+                prefectures_querys.forEach{ prefecture ->
                     var tmp = mutableListOf<String>()
                     val request = Request.Builder().apply {
                         url("$mainUrl&q=$prefecture&appid=$apiKey")
@@ -51,16 +52,16 @@ class MainActivity : AppCompatActivity() {
                     tmp += parentJsonObj.getJSONArray("weather").getJSONObject(0).getString("description")
                     tmp += (parentJsonObj.getJSONObject("main").getInt("temp_max")-273).toString()
                     tmp += (parentJsonObj.getJSONObject("main").getInt("temp_min")-273).toString()
-                    mmm += parentJsonObj["name"].toString() to tmp
-                    mweatherList += Weather(0,tmp[0],tmp[1],tmp[2].toInt(),tmp[3].toInt())
+                    tmp += parentJsonObj.getJSONArray("weather").getJSONObject(0).getString("main")
+                    WeatherAllDatas += parentJsonObj["name"].toString() to tmp
+                    VariableForDBSave += Weather(0,tmp[0],tmp[1],tmp[2].toInt(),tmp[3].toInt(),tmp[4])
 
                 }//forEach end
-
+                //データベースに未保存のためInsert
                 System.out.println("データベースにInsert開始")
-                weatherDao.insertAll(mweatherList)
+                weatherDao.insertAll(VariableForDBSave)
 
-            }else{// データベースに未保存だったら
-                weatherDao.getAll()
+            }else{// データベースに保存済みだったら
                 weatherDao.getAll().forEach{ info ->
                     var tmp = mutableListOf<String>()
                     preference_name += info.name
@@ -68,14 +69,14 @@ class MainActivity : AppCompatActivity() {
                     tmp += info.weather
                     tmp += info.temp_max.toString()
                     tmp += info.temp_min.toString()
-                    mmm += info.name to tmp
+                    tmp += info.weather_detail
+                    WeatherAllDatas += info.name to tmp
                 }//foreach end
             }//if end
 
-            //グローバル変数にして、セカンドviewでも渡したキーで対応したい
+            //グローバル変数もどきにして、セカンドviewでも渡したキーで対応したい
             val wi = WeatherInfo.getInstance()
-            wi.QRResult = preference_name
-            wi.GVweather = mmm
+            wi.GVweather = WeatherAllDatas
 
             //リストデータをリストビューに表示
             val list = findViewById<ListView>(R.id.list_view)
@@ -92,6 +93,5 @@ class MainActivity : AppCompatActivity() {
                 startActivity(intent)
             }
         }//lifecycleScope end
-
     }
 }

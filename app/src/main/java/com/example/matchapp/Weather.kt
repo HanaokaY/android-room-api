@@ -9,5 +9,6 @@ data class Weather(
     val name: String,
     val weather: String,
     val temp_max: Int,
-    val temp_min: Int
+    val temp_min: Int,
+    val weather_detail: String
     )

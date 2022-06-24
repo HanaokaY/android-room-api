@@ -4,8 +4,7 @@ import android.app.Application
 
 class WeatherInfo:Application() {
 
-    var QRResult: MutableList<String>? = null
-    var GVweather = mutableMapOf<String,List<String>>() // mmmが入ってくる
+    var GVweather = mutableMapOf<String,List<String>>() // WeatherAllDatasが入ってくる
 
     companion object {
         private var instance : WeatherInfo? = null
